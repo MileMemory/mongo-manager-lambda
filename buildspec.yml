@@ -1,0 +1,41 @@
+# AWS CodeBuild: builds the Lambda deployment package (lambda.zip).
+# The handler (deploy/lambda/index.mjs) starts the CLI bundle and proxies events to it; see deploy/lambda/README.md.
+version: 0.2
+
+env:
+  variables:
+    PNPM_VERSION: '12.6.0'
+
+phases:
+  install:
+    runtime-versions:
+      nodejs: 24
+    commands:
+      - npm install --global pnpm@${PNPM_VERSION}
+      - pnpm install --frozen-lockfile
+  pre_build:
+    commands:
+      - pnpm lint
+      - pnpm typecheck
+      - pnpm test
+  build:
+    commands:
+      - pnpm build
+      - rm -rf lambda-pkg lambda.zip
+      - mkdir -p lambda-pkg/dist
+      - cp packages/cli/dist/cli.cjs packages/cli/dist/shell-worker.cjs packages/cli/dist/THIRD-PARTY-NOTICES.txt lambda-pkg/dist/
+      - cp -r packages/cli/public packages/cli/plugins lambda-pkg/
+      - cp LICENSE NOTICE lambda-pkg/
+      - cp deploy/lambda/index.mjs lambda-pkg/index.mjs
+  post_build:
+    commands:
+      - cd lambda-pkg && zip -qr ../lambda.zip . && cd ..
+      - ls -l lambda.zip
+
+artifacts:
+  files:
+    - lambda.zip
+
+cache:
+  paths:
+    - /root/.local/share/pnpm/store/**/*
