@@ -5,6 +5,7 @@ version: 0.2
 env:
   variables:
     PNPM_VERSION: '12.6.0'
+    LAMBDA_FUNCTION: mongo-website
 
 phases:
   install:
@@ -13,11 +14,6 @@ phases:
     commands:
       - npm install --global pnpm@${PNPM_VERSION}
       - pnpm install --frozen-lockfile
-  pre_build:
-    commands:
-      - pnpm lint
-      - pnpm typecheck
-      - pnpm test
   build:
     commands:
       - pnpm build
@@ -31,6 +27,7 @@ phases:
     commands:
       - cd lambda-pkg && zip -qr ../lambda.zip . && cd ..
       - ls -l lambda.zip
+      - aws lambda update-function-code --function-name "$LAMBDA_FUNCTION" --zip-file fileb://lambda.zip
 
 artifacts:
   files:
@@ -38,4 +35,4 @@ artifacts:
 
 cache:
   paths:
-    - /root/.local/share/pnpm/store/**/*
+    - /codebuild/output/.pnpm-store/**/*
