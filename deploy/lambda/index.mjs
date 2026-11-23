@@ -19,7 +19,7 @@ function startServer() {
     stdio: 'inherit',
     env: {
       ...process.env,
-      MM_AUTH: '1',
+      MM_AUTH: process.env.MM_AUTH ?? '1',
       MM_HOST: '127.0.0.1',
       MM_WEB_PORT: String(PORT),
       MM_OPEN: '0',
